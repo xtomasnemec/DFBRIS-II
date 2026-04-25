@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SUBMODULE_PATH="dfbris-ii/Sources/DFBRIS2/Non-OpenSource"
+
+# If the submodule isn't present (e.g., partial checkout), do nothing.
+if [[ ! -f .gitmodules ]] || ! git config -f .gitmodules --get-regexp "submodule\\.${SUBMODULE_PATH//\//\\/}\\.path" >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Ensure the submodule is initialized.
+if [[ ! -e "$SUBMODULE_PATH/.git" ]]; then
+    git submodule update --init --recursive -- "$SUBMODULE_PATH" >/dev/null
+fi
+
+# Push the submodule commit so the superproject never points at an unpublished SHA.
+(
+    cd "$SUBMODULE_PATH"
+
+    default_branch="$(git remote show origin 2>/dev/null | awk '/HEAD branch/ {print $NF}')"
+    default_branch="${default_branch:-main}"
+
+    # Submodules are often checked out in detached HEAD; pushing HEAD->default_branch is intentional.
+    git push origin "HEAD:${default_branch}"
+)
+
+exit 0

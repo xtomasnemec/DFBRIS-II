@@ -144,4 +144,19 @@ yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null
 # init skip
 ensure_xcode_selected || exit 1
 ensure_ios_platform_installed || exit 1
+
+# GitHub CLI + submodules
+if command -v gh >/dev/null 2>&1; then
+    GH_PAGER=cat PAGER=cat gh auth setup-git >/dev/null 2>&1 || true
+fi
+
+# Use versioned hooks (see .githooks/) and make pushes include submodule commits.
+git config core.hooksPath .githooks
+git config push.recurseSubmodules on-demand
+git config submodule.recurse true
+chmod +x .githooks/pre-push >/dev/null 2>&1 || true
+
+# Ensure submodules are present for builds.
+git submodule update --init --recursive
+
 skip checkup
