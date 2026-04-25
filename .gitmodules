@@ -1,0 +1,3 @@
+[submodule "dfbris-ii/Sources/DFBRIS2/Non-OpenSource"]
+	path = dfbris-ii/Sources/DFBRIS2/Non-OpenSource
+	url = https://github.com/Dopravni-Fotoakce-Brno/DFBRIS-II-private-code
