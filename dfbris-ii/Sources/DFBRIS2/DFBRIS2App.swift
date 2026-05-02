@@ -20,11 +20,13 @@ let logger: Logger = Logger(subsystem: "com.dfotoakcebrno.dfbris2", category: "D
     }
 }
 
+#if !TARGET_OS_ANDROID
 struct App_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
     }
 }
+#endif
 /// Global application delegate functions.
 ///
 /// These functions can update a shared observable object to communicate app state changes to interested views.

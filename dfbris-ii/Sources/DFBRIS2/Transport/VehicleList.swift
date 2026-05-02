@@ -8,5 +8,6 @@ import SwiftUI
 
 struct VehicleList: View {
     var body: some View {
+        Text("Under construction")
     }
 }

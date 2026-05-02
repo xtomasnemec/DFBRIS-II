@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SkipFuse
 
 struct RezSys: View {
     var body: some View {
@@ -30,16 +31,36 @@ struct RezSys: View {
                     .padding()
                     .font(.system(size: 120, weight: .regular, design: .default))
                 
+                
                     VStack {
-                        VButtonStack(name: String(localized: "Reservations"), symbol: "tram.card.fill", destination: Reservations())
-                        if isOrganizator { VButtonStack(name: String(localized: "Reservations Admin"), symbol: "list.clipboard.fill", destination: AdminReservations())}
-                        VButtonStack(name: String(localized: "My account"), symbol: "person.crop.square.filled.and.at.rectangle.fill", destination: Account())
-                        VButtonStack(name: String(localized: "Login"), symbol: "key.2.on.ring.fill", destination: LoginPage())
-                        if isOrganizator { VButtonStack(name: String(localized: "Ticket check"), symbol: "ticket.fill", destination: AdminReservations())}
-                    }
+                        let loginHandler = LoginHandler.shared
+                        if loginHandler.isLogedIn {
+                            VButtonStack(name: L("Reservations"), symbol: "tram.card.fill", destination: Reservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        
+                        if loginHandler.isOrganizator, loginHandler.isLogedIn {
+                            VButtonStack(name: L("Reservations Admin"), symbol: "list.clipboard.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        
+                        if loginHandler.isLogedIn {
+                            VButtonStack(name: L("My account"), symbol: "person.crop.square.filled.and.at.rectangle.fill", destination: Account(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        
+                        if !loginHandler.isLogedIn {
+                            VButtonStack(name: L("Login"), symbol: "key.2.on.ring.fill", destination: LoginPage(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        
+                        if loginHandler.isOrganizator, loginHandler.isLogedIn {
+                            VButtonStack(name: L("Ticket check"), symbol: "ticket.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        
+                        if loginHandler.isLogedIn {
+                            VButtonStack(name: L("Logout"), symbol: "key.slash.fill", destination: Logout(), tintColorName: "RezSysColor", tintFallback: .orange)
+                        }
+                        }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    }
                 }
-            .tint(Color("RezSysColor"))
+            .tint(AppColor("RezSysColor", fallback: .orange))
         }
     }
-}

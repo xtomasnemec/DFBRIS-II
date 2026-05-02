@@ -74,3 +74,8 @@ Carthage/Build/
 **/fastlane/README.md
 **/fastlane/Preview.html
 **/fastlane/test_output
+/dfbris-ii/.skip-export
+dfbris-ii/resource_bundle_accessor-2.swiftmodule
+dfbris-ii/resource_bundle_accessor-2.swiftdeps
+dfbris-ii/resource_bundle_accessor-2.dia
+dfbris-ii/resource_bundle_accessor-2.d

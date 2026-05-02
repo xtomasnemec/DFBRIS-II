@@ -7,6 +7,8 @@
 
 
 import SwiftUI
+import SkipFuse
+import Foundation
 
 struct DFB: View {
     var body: some View {
@@ -31,15 +33,16 @@ struct DFB: View {
                     .padding()
                     .font(.system(size: 120, weight: .regular, design: .default))
                 
-                
+
                 VStack {
-                    VButtonStack(name: String(localized: "Contact"), symbol: "phone.fill", destination: Contact())
-                    VButtonStack(name: String(localized: "Services"), symbol: "calendar.and.person", destination: Services())
-                    VButtonStack(name: String(localized: "Timetable"), symbol: "command", destination: Timetable())
+                    let loginHandler = LoginHandler.shared
+                    VButtonStack(name: L("Contact"), symbol: "phone.fill", destination: Contact(), tintColorName: "DFBColor", tintFallback: .red)
+                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Services"), symbol: "calendar.and.person", destination: Services(), tintColorName: "DFBColor", tintFallback: .red)}
+                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Timetable"), symbol: "command", destination: Timetable(), tintColorName: "DFBColor", tintFallback: .red)}
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
-            .tint(Color("DFBColor"))
+            .tint(AppColor("DFBColor", fallback: .red))
         }
     }
 }

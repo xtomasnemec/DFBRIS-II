@@ -1,56 +1,104 @@
 import SwiftUI
-
-// test
-let isOrganizator = true
+import SkipFuse
 
 struct ContentView: View {
-    
-    enum TabItem: Hashable {
-        case home, transport, dfb, rezsys
-    }
-    
-    @State var selectedTab: TabItem = .home
-    
-    //tab system
+
+    @State internal var selectedTab: TabItem = .home
+    @State internal var navigationVersions: [TabItem: Int] = [
+        .home: 0,
+        .transport: 0,
+        .dfb: 0,
+        .rezsys: 0,
+    ]
+    @State internal var tabSwitchObserver: NSObjectProtocol?
+
     var body: some View {
         TabView(selection: $selectedTab) {
-            
+
             Tab("Home",
-                systemImage: selectedTab == .home ? "house.fill" : "house",
+                systemImage: icon(.home, "house"),
                 value: .home) {
                 NavigationStack {
                     HomeScreen()
                 }
+                .id(navigationVersion(for: .home))
             }
-            
+
             Tab("Transport",
-                systemImage: selectedTab == .transport ? "lightrail.fill" : "lightrail",
+                systemImage: icon(.transport, "lightrail"),
                 value: .transport) {
                 NavigationStack {
                     Transport()
                 }
+                .id(navigationVersion(for: .transport))
             }
-            
+
             Tab("DFB",
-                systemImage: selectedTab == .dfb ? "camera.fill" : "camera",
+                systemImage: icon(.dfb, "camera"),
                 value: .dfb) {
                 NavigationStack {
                     DFB()
                 }
+                .id(navigationVersion(for: .dfb))
             }
-            
+
             Tab("RezSys",
-                systemImage: selectedTab == .rezsys ? "wallet.bifold.fill" : "wallet.bifold",
+                systemImage: icon(.rezsys, "wallet.bifold"),
                 value: .rezsys) {
                 NavigationStack {
                     RezSys()
                 }
+                .id(navigationVersion(for: .rezsys))
             }
         }
-        .tabViewStyle(.tabBarOnly)
-        .tint(selectedTab == .transport ? Color("TransportColor", bundle: .module):
-              selectedTab == .dfb ? Color("DFBColor", bundle: .module):
-              selectedTab == .rezsys ? Color("RezSysColor", bundle: .module):
-            .accentColor)
+        .onChange(of: selectedTab) { _, newTab in
+            resetNavigation(for: newTab)
+        }
+        .onAppear {
+            if tabSwitchObserver == nil {
+                tabSwitchObserver = AppState.observeTabSwitch { tab in
+                    selectedTab = tab
+                }
+            }
+        }
+        .onDisappear {
+            if let tabSwitchObserver {
+                AppState.removeObserver(tabSwitchObserver)
+                self.tabSwitchObserver = nil
+            }
+        }
+        #if targetEnvironment(macCatalyst)
+            .tabViewStyle(.sidebarAdaptable)
+        #else
+            .tabViewStyle(.automatic)
+        #endif
+        .tint(colorForTab(selectedTab))
+    }
+
+    // MARK: - ikonky (.fill pro aktivní tab)
+    func icon(_ tab: TabItem, _ name: String) -> String {
+        selectedTab == tab ? "\(name).fill" : name
+    }
+
+    func navigationVersion(for tab: TabItem) -> Int {
+        navigationVersions[tab, default: 0]
+    }
+
+    func resetNavigation(for tab: TabItem) {
+        navigationVersions[tab, default: 0] += 1
+    }
+
+    // MARK: - barvy tabů
+    func colorForTab(_ tab: TabItem) -> Color {
+        switch tab {
+        case .transport:
+            return AppColor("TransportColor", fallback: .red)
+        case .dfb:
+            return AppColor("DFBColor", fallback: .yellow)
+        case .rezsys:
+            return AppColor("RezSysColor", fallback: .blue)
+        default:
+            return .accentColor
+        }
     }
 }

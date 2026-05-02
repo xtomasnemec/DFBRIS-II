@@ -97,8 +97,7 @@ brew update
 brew upgrade
 brew tap skiptools/skip
 brew install --formula skip
-brew install --cask temurin
-brew install --cask android-ndk android-platform-tools android-commandlinetools
+brew install --cask android-platform-tools android-commandlinetools
 
 # download android swift sdk
 if command -v swiftly >/dev/null 2>&1; then
@@ -118,28 +117,6 @@ hash -r
 swiftly link --assume-yes
 swiftly install latest --assume-yes
 swiftly use latest --assume-yes
-swift sdk install https://download.swift.org/swift-6.3.1-release/android-sdk/swift-6.3.1-RELEASE/swift-6.3.1-RELEASE_android.artifactbundle.tar.gz --checksum 8193a4e96538635131a154736c8896fba0e5a1c30e065524f00ed78719bac35a
-
-# accept Android SDK licenses non-interactively
-export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}"
-export ANDROID_HOME="$ANDROID_SDK_ROOT"
-if ! java -version >/dev/null 2>&1; then
-    echo "Java runtime is missing (required for Android sdkmanager)."
-    echo
-    echo "If the Homebrew Temurin install prompted for sudo, re-run this script and complete the prompt."
-    exit 1
-fi
-
-export JAVA_HOME="$(/usr/libexec/java_home)"
-export PATH="$JAVA_HOME/bin:$PATH"
-mkdir -p "$ANDROID_SDK_ROOT" "$HOME/.android"
-touch "$HOME/.android/repositories.cfg"
-if ! command -v sdkmanager >/dev/null 2>&1; then
-    echo "sdkmanager not found in PATH (expected from the android-commandlinetools Homebrew cask)."
-    exit 1
-fi
-
-yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null
 
 # init skip
 ensure_xcode_selected || exit 1
@@ -159,4 +136,5 @@ chmod +x .githooks/pre-push >/dev/null 2>&1 || true
 # Ensure submodules are present for builds.
 git submodule update --init --recursive
 
+skip android sdk install
 skip checkup
