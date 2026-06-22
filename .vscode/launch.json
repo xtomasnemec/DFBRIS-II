@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:DFBRIS-II}/dfbris-ii",
+            "name": "Debug DFBRIS2App (dfbris-ii)",
+            "target": "DFBRIS2App",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug DFBRIS2App (dfbris-ii)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:DFBRIS-II}/dfbris-ii",
+            "name": "Release DFBRIS2App (dfbris-ii)",
+            "target": "DFBRIS2App",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release DFBRIS2App (dfbris-ii)"
+        }
+    ]
+}

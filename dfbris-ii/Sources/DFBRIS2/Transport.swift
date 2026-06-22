@@ -32,15 +32,15 @@ struct Transport: View {
                 
                 
                 VStack {
-                    VButtonStack(name: L("Events"), symbol: "calendar.badge.clock", destination: EventList(), tintColorName: "TransportColor", tintFallback: .blue)
-                    VButtonStack(name: L("Connection search"), symbol: "magnifyingglass", destination: RouteEngine(), tintColorName: "TransportColor", tintFallback: .blue)
-                    VButtonStack(name: L("Dynamic map"), symbol: "globe", destination: OSMMap(), tintColorName: "TransportColor", tintFallback: .blue)
-                    VButtonStack(name: L("Vehicles"), symbol: "bus.fill", destination: VehicleList(), tintColorName: "TransportColor", tintFallback: .blue)
-                    VButtonStack(name: L("Extraordinary events"), symbol: "exclamationmark.triangle", destination: Mimoradnosti(), tintColorName: "TransportColor", tintFallback: .blue)
+                    VButtonStack(name: L("Events"), symbol: "calendar.badge.clock", destination: EventList(), tintColorName: "TransportColor", tintFallback: .red)
+                    VButtonStack(name: L("Connection search"), symbol: "magnifyingglass", destination: RouteEngine(), tintColorName: "TransportColor", tintFallback: .red)
+                    VButtonStack(name: L("Dynamic map"), symbol: "globe", destination: OSMMap(), tintColorName: "TransportColor", tintFallback: .red)
+                    VButtonStack(name: L("Vehicles"), symbol: "bus.fill", destination: VehicleList(), tintColorName: "TransportColor", tintFallback: .red)
+                    VButtonStack(name: L("Extraordinary events"), symbol: "exclamationmark.triangle", destination: Mimoradnosti(), tintColorName: "TransportColor", tintFallback: .red)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
-            .tint(AppColor("TransportColor", fallback: .blue))
+            .tint(AppColor("TransportColor", fallback: .red))
         }
     }
 }

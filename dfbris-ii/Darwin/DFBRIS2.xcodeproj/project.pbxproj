@@ -139,7 +139,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2640;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2700;
 			};
 			buildConfigurationList = 49F90C232A52156200F06D93 /* Build configuration list for PBXProject "DFBRIS2" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -193,7 +193,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "if [ \"${SKIP_ZERO}\" != \"\" ]; then\n  echo \"note: skipping skip due to SKIP_ZERO\"\n  exit 0\nelif [ \"${ENABLE_PREVIEWS}\" = \"YES\" ]; then\n  echo \"note: skipping skip due to ENABLE_PREVIEWS\"\n  exit 0\nelif [ \"${ACTION}\" = \"install\" ]; then\n  echo \"note: skipping skip due to archive install\"\n  exit 0\nelif [ \"${SKIP_ACTION}\" = \"none\" ]; then\n  echo \"note: skipping skip due to SKIP_ACTION none\"\n  exit 0\nelse\n  SKIP_ACTION=\"${SKIP_ACTION:-launch}\"\nfi\nPATH=${BUILD_ROOT}/Release:${BUILD_ROOT}/Debug:${BUILD_ROOT}/../../SourcePackages/artifacts/skip/skip/skip.artifactbundle/macos:${PATH}:${HOMEBREW_PREFIX:-/opt/homebrew}/bin\necho \"note: running gradle build with: $(which skip) gradle -p ${PWD}/../Android ${SKIP_ACTION:-launch}${CONFIGURATION:-Debug}\"\n#skip gradle -p ../Android ${SKIP_ACTION:-launch}${CONFIGURATION:-Debug}\n";
+			shellScript = "set -euo pipefail\n\n# -------------------------\n# Java\n# -------------------------\nexport JAVA_HOME=$(/usr/libexec/java_home -v 21)\nexport PATH=\"$JAVA_HOME/bin:$PATH\"\n\n# -------------------------\n# Root (Xcode-safe)\n# -------------------------\nROOT_DIR=\"${SRCROOT}\"\n\nPROJECT_DIR=\"$ROOT_DIR\"\n\nIOS_ASSET_DIR=\"$PROJECT_DIR/Assets.xcassets\"\nMODULE_ASSET_DIR=\"$PROJECT_DIR/../Sources/DFBRIS2/Resources/Module.xcassets\"\nANDROID_RES_DIR=\"$PROJECT_DIR/../Android/app/src/main/res\"\nANDROID_APP_ICON_SOURCE=\"$PROJECT_DIR/AppIcon.icon/Assets/Icon-App-1024x1024@1x.png\"\n\n# -------------------------\n# Android SDK\n# -------------------------\nexport ANDROID_HOME=\"${ANDROID_HOME:-$HOME/Library/Android/sdk}\"\n\n# -------------------------\n# Helpers\n# -------------------------\n\nsync_module_assets() {\n    echo \"note: syncing iOS assets → module\"\n\n    mkdir -p \"$MODULE_ASSET_DIR\"\n    cp -R \"$IOS_ASSET_DIR/.\" \"$MODULE_ASSET_DIR/\"\n}\n\nsync_android_launcher_icon() {\n    echo \"note: generating Android launcher icons\"\n\n    if [ ! -f \"$ANDROID_APP_ICON_SOURCE\" ]; then\n        echo \"error: missing icon: $ANDROID_APP_ICON_SOURCE\"\n        exit 1\n    fi\n\n    sizes=\"48 72 96 144 192\"\n    dirs=\"mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi\"\n\n    i=1\n    for size in $sizes; do\n        dir=$(echo $dirs | cut -d' ' -f$i)\n\n        target_dir=\"$ANDROID_RES_DIR/$dir\"\n        target_file=\"$target_dir/ic_launcher.png\"\n\n        mkdir -p \"$target_dir\"\n\n        sips -z \"$size\" \"$size\" \"$ANDROID_APP_ICON_SOURCE\" --out \"$target_file\" >/dev/null\n        chmod 644 \"$target_file\"\n\n        i=$((i + 1))\n    done\n}\n\n# -------------------------\n# Build context\n# -------------------------\n\necho \"note: SRCROOT=$SRCROOT\"\ncd \"$PROJECT_DIR\"\n\nsync_module_assets\nsync_android_launcher_icon\n\n# -------------------------\n# Skip logic\n# -------------------------\n\nif [ -n \"${SKIP_ZERO:-}\" ]; then\n  echo \"note: skipping skip due to SKIP_ZERO\"\n  exit 0\nelif [ \"${ENABLE_PREVIEWS:-NO}\" = \"YES\" ]; then\n  echo \"note: skipping skip due to ENABLE_PREVIEWS\"\n  exit 0\nelif [ \"${ACTION:-}\" = \"install\" ]; then\n  echo \"note: skipping skip due to archive install\"\n  exit 0\nelif [ \"${SKIP_ACTION:-}\" = \"none\" ]; then\n  echo \"note: skipping skip due to SKIP_ACTION none\"\n  exit 0\nelse\n  SKIP_ACTION=\"${SKIP_ACTION:-launch}\"\nfi\n\n# -------------------------\n# PATH setup (Xcode-safe)\n# -------------------------\n\nexport PATH=\"${BUILD_ROOT}/Release:${BUILD_ROOT}/Debug:${BUILD_ROOT}/../../SourcePackages/artifacts/skip/skip/skip.artifactbundle/macos:${PATH}\"\n\nif command -v brew >/dev/null 2>&1; then\n  export PATH=\"$PATH:$(brew --prefix)/bin\"\nfi\n\n# -------------------------\n# Run skip\n# -------------------------\n\nSKIP_BIN=\"$(command -v skip || true)\"\n\nif [ -z \"$SKIP_BIN\" ]; then\n  echo \"error: skip not found in PATH\"\n  exit 1\nfi\n\necho \"note: running skip gradle\"\necho \"$SKIP_BIN gradle -p ../Android ${SKIP_ACTION}${CONFIGURATION:-Debug}\"\n\n\"$SKIP_BIN\" gradle -p ../Android \"${SKIP_ACTION}${CONFIGURATION:-Debug}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -217,7 +217,6 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = DYSRRHMTU8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -250,7 +249,6 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = DYSRRHMTU8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -302,6 +300,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DYSRRHMTU8;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -349,6 +348,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DYSRRHMTU8;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;

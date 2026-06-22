@@ -1,0 +1,5 @@
+# Skip configuration for DFBRIS2 app entry module
+#
+# This executable target is built natively for Android Skip.
+skip:
+  mode: 'native'

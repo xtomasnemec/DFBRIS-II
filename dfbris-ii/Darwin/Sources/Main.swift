@@ -1,3 +1,11 @@
+#if TARGET_OS_ANDROID
+import DFBRIS2
+
+@main struct AppMain {
+    static func main() {
+    }
+}
+#else
 import SwiftUI
 import DFBRIS2
 
@@ -84,3 +92,4 @@ typealias AppType = NSApplication
     #endif
 
 }
+#endif

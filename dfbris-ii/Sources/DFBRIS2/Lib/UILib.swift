@@ -14,7 +14,7 @@ func L(_ key: String) -> String {
 
 @inline(__always)
 func AppColor(_ name: String, fallback: Color) -> Color {
-    fallback
+    Color(name, bundle: .module)
 }
 #else
 @inline(__always)
@@ -62,7 +62,7 @@ struct VButtonStack<Destination: View>: View {
                 Text(name)
                     .font(.system(size: 22))
                 Spacer()
-                Image(systemName: symbol)
+                Image(symbol)
             }
             .padding()
             .frame(width: 370)
@@ -95,12 +95,10 @@ struct SocialLink: View {
             Link(destination: url) {
                 VStack {
 #if TARGET_OS_ANDROID
-                    Image(systemName: "link")
-                        .resizable()
-                        .scaledToFit()
+                    Image(image, bundle: .module)
                         .frame(width: 30, height: 30)
 #else
-                    Image(image)
+                    Image(image, bundle: .module)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 30, height: 30)
@@ -120,10 +118,10 @@ struct SocialLink: View {
         } else {
             VStack {
 #if TARGET_OS_ANDROID
-                Image(systemName: "link")
-                    .resizable()
+                Image(image, bundle: .module)
+                    .frame(width: 30, height: 30)
 #else
-                Image(image)
+                Image(image, bundle: .module)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 30)
@@ -163,5 +161,35 @@ struct MessageBox: View {
                 }
                 .transition(.opacity)
         }
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let normalized = hex.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "#", with: "")
+        if normalized.count == 6, let value = Int(normalized, radix: 16) {
+            self.init(
+                red: Double((value >> 16) & 0xFF) / 255.0,
+                green: Double((value >> 8) & 0xFF) / 255.0,
+                blue: Double(value & 0xFF) / 255.0
+            )
+        } else {
+            self = .blue // Fallback color
+        }
+    }
+}
+
+// MARK: - Date Extension
+extension Date {
+    /// Parses strings in format "DD.MM.YYYY"
+    static func fromDottedString(_ value: String) -> Date {
+        let parts = value.split(separator: ".").map(String.init)
+        guard parts.count == 3,
+              let day = Int(parts[0]),
+              let month = Int(parts[1]),
+              let year = Int(parts[2]) else {
+            return .distantPast
+        }
+        return Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? .distantPast
     }
 }

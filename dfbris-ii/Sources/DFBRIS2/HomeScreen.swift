@@ -27,18 +27,11 @@ struct HomeScreen: View {
                     .bold()
                     .fontWeight(.heavy)
                     .padding(.top)
-                
-#if TARGET_OS_ANDROID
-                Image(systemName: "tram.fill")
+
+                Image(colorScheme == .dark ? "DFBLogo" : "DFBLogoLight", bundle: .module)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 200, height: 200)
-#else
-                Image(colorScheme == .dark ? "DFBLogo" : "DFBLogoLight")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200, height: 200)
-#endif
                 
                 Spacer()
                 

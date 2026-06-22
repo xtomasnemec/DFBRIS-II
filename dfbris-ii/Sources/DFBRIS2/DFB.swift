@@ -36,13 +36,13 @@ struct DFB: View {
 
                 VStack {
                     let loginHandler = LoginHandler.shared
-                    VButtonStack(name: L("Contact"), symbol: "phone.fill", destination: Contact(), tintColorName: "DFBColor", tintFallback: .red)
-                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Services"), symbol: "calendar.and.person", destination: Services(), tintColorName: "DFBColor", tintFallback: .red)}
-                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Timetable"), symbol: "command", destination: Timetable(), tintColorName: "DFBColor", tintFallback: .red)}
+                    VButtonStack(name: L("Contact"), symbol: "phone.fill", destination: Contact(), tintColorName: "DFBColor", tintFallback: .green)
+                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Services"), symbol: "calendar.and.person", destination: Services(), tintColorName: "DFBColor", tintFallback: .green)}
+                    if loginHandler.isLogedIn && (loginHandler.OrganizatorRole || loginHandler.lastUsername == Optional("tomasnemec") || loginHandler.lastUsername == Optional("tomashrebicek")) {VButtonStack(name: L("Timetable"), symbol: "command", destination: Timetable(), tintColorName: "DFBColor", tintFallback: .green)}
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
-            .tint(AppColor("DFBColor", fallback: .red))
+            .tint(AppColor("DFBColor", fallback: .green))
         }
     }
 }

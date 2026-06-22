@@ -17,7 +17,7 @@ struct LoginPage: View {
         ZStack {
             LinearGradient(
                 gradient: Gradient(colors: [
-                    AppColor("RezSysColor", fallback: .orange).opacity(0.24),
+                    AppColor("RezSysColor", fallback: .blue).opacity(0.24),
                     Color.clear
                 ]),
                 startPoint: .top,
@@ -53,7 +53,7 @@ struct LoginPage: View {
         VStack(spacing: 12) {
             Image(systemName: loginHandler.isLogedIn ? "person.crop.circle.badge.checkmark" : "key.2.on.ring.fill")
                 .font(.system(size: 78, weight: .regular))
-                .foregroundStyle(AppColor("RezSysColor", fallback: .orange))
+                .foregroundStyle(AppColor("RezSysColor", fallback: .blue))
 
             Text(L("RezSys access"))
                 .font(.title)

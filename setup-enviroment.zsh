@@ -98,6 +98,7 @@ brew upgrade
 brew tap skiptools/skip
 brew install --formula skip
 brew install --cask android-platform-tools android-commandlinetools
+brew install imagemagick
 
 # download android swift sdk
 if command -v swiftly >/dev/null 2>&1; then
@@ -138,3 +139,8 @@ git submodule update --init --recursive
 
 skip android sdk install
 skip checkup
+
+# Create local.properties to ensure Gradle can find the Android SDK
+if [[ -d dfbris-ii/Android ]]; then
+    echo "sdk.dir=${ANDROID_HOME:-$HOME/Library/Android/sdk}" > dfbris-ii/Android/local.properties
+fi

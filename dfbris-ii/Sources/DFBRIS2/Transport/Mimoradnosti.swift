@@ -12,6 +12,10 @@ import SkipFuse
 import FoundationNetworking
 #endif
 
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
+
 internal struct IncidentItem: Identifiable {
     let id: String
     let validFrom: String?
@@ -52,7 +56,7 @@ internal struct Mimoradnosti: View {
                 // Pozadí odpovídající EventListu
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        AppColor("TransportColor", fallback: .blue).opacity(0.24),
+                        AppColor("TransportColor", fallback: .red).opacity(0.24),
                         Color.clear
                     ]),
                     startPoint: .top,
@@ -115,8 +119,12 @@ internal struct Mimoradnosti: View {
             // Periodic update every minute like in Flutter
             refreshTask = Task {
                 while !Task.isCancelled {
-                    try? await Task.sleep(nanoseconds: 60 * 1_000_000_000)
-                    await fetchIncidents()
+                    do {
+                        try await Task.sleep(nanoseconds: 60 * 1_000_000_000)
+                        if !Task.isCancelled { await fetchIncidents() }
+                    } catch {
+                        break
+                    }
                 }
             }
         }
@@ -260,33 +268,13 @@ internal struct Mimoradnosti: View {
             let (data, _) = try await incidentURLSession.data(from: url)
             let decoded = try JSONDecoder().decode(ColorsResponse.self, from: data)
             
-            var colors: [String: Color] = [:]
-            var tColors: [String: Color] = [:]
-            
-            for alias in decoded.lineAliases {
-                colors[alias.lineName] = colorFromHex(alias.color)
-                tColors[alias.lineName] = colorFromHex(alias.textColor)
-            }
-            lineColors = colors
-            lineTextColors = tColors
+            lineColors = decoded.lineAliases.reduce(into: [:]) { $0[$1.lineName] = Color(hex: $1.color) }
+            lineTextColors = decoded.lineAliases.reduce(into: [:]) { $0[$1.lineName] = Color(hex: $1.textColor) }
         } catch {
             print("Error loading line colors: \(error)")
         }
     }
-
-    private func colorFromHex(_ hex: String) -> Color {
-        let normalized = hex.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "#", with: "")
-        guard normalized.count == 6, let value = Int(normalized, radix: 16) else {
-            return .blue
-        }
-        return Color(
-            red: Double((value >> 16) & 0xFF) / 255.0,
-            green: Double((value >> 8) & 0xFF) / 255.0,
-            blue: Double(value & 0xFF) / 255.0
-        )
-    }
 }
-
 private class IncidentXMLDelegate: NSObject, XMLParserDelegate {
     var events: [[String: String]] = []
     private var currentEvent: [String: String]?

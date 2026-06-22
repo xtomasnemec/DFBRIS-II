@@ -35,32 +35,32 @@ struct RezSys: View {
                     VStack {
                         let loginHandler = LoginHandler.shared
                         if loginHandler.isLogedIn {
-                            VButtonStack(name: L("Reservations"), symbol: "tram.card.fill", destination: Reservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("Reservations"), symbol: "tram.card.fill", destination: Reservations(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         
                         if loginHandler.isOrganizator, loginHandler.isLogedIn {
-                            VButtonStack(name: L("Reservations Admin"), symbol: "list.clipboard.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("Reservations Admin"), symbol: "list.clipboard.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         
                         if loginHandler.isLogedIn {
-                            VButtonStack(name: L("My account"), symbol: "person.crop.square.filled.and.at.rectangle.fill", destination: Account(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("My account"), symbol: "person.crop.square.filled.and.at.rectangle.fill", destination: Account(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         
                         if !loginHandler.isLogedIn {
-                            VButtonStack(name: L("Login"), symbol: "key.2.on.ring.fill", destination: LoginPage(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("Login"), symbol: "key.2.on.ring.fill", destination: LoginPage(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         
                         if loginHandler.isOrganizator, loginHandler.isLogedIn {
-                            VButtonStack(name: L("Ticket check"), symbol: "ticket.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("Ticket check"), symbol: "ticket.fill", destination: AdminReservations(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         
                         if loginHandler.isLogedIn {
-                            VButtonStack(name: L("Logout"), symbol: "key.slash.fill", destination: Logout(), tintColorName: "RezSysColor", tintFallback: .orange)
+                            VButtonStack(name: L("Logout"), symbol: "key.slash.fill", destination: Logout(), tintColorName: "RezSysColor", tintFallback: .blue)
                         }
                         }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
                 }
-            .tint(AppColor("RezSysColor", fallback: .orange))
+            .tint(AppColor("RezSysColor", fallback: .blue))
         }
     }

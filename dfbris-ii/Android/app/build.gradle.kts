@@ -1,7 +1,6 @@
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
     id("skip-build-plugin")
@@ -10,14 +9,13 @@ plugins {
 skip {
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(libs.versions.jvm.get().toString())
-    }
-}
-
 android {
     namespace = group as String
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(libs.versions.jvm.get().toString())
+        }
+    }
     compileSdk = libs.versions.android.sdk.compile.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jvm.get())
@@ -25,6 +23,7 @@ android {
     }
     packaging {
         jniLibs {
+            excludes.add("**/armv7-unknown-linux-android28/**")
             keepDebugSymbols.add("**/*.so")
             pickFirsts.add("**/*.so")
             // this option will compress JNI .so files
@@ -39,6 +38,12 @@ android {
         // applicationId = ANDROID_APPLICATION_ID ?? PRODUCT_BUNDLE_IDENTIFIER
         // versionCode = CURRENT_PROJECT_VERSION
         // versionName = MARKETING_VERSION
+
+        // Include native libraries for both x86_64 and arm64-v8a
+        // (built by: skip android build --arch all)
+        ndk {
+            abiFilters.addAll(listOf("x86_64", "arm64-v8a"))
+        }
     }
 
     buildFeatures {
@@ -85,7 +90,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false // can be set to true for debugging release build, but needs to be false when uploading to store
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

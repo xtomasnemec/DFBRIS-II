@@ -21,6 +21,20 @@ This project is both a stand-alone Swift Package Manager module,
 as well as an Xcode project that builds and translates the project
 into a Kotlin Gradle project for Android using the skipstone plugin.
 
+If you are building Android from an Intel Mac, that is fine: Skip can still
+produce `arm64-v8a` and `x86_64` Android native libraries. The important part
+is to run the Android build path, not only the Xcode/iOS GUI build.
+
+From the repository root, use:
+
+```bash
+./build-android.zsh
+```
+
+That script runs `skip android build --arch all`, copies the resulting native
+libraries into `Android/app/src/main/jniLibs`, and installs the debug APK with
+the system `gradle` command used by this repo.
+
 ## Running
 
 Xcode and Android Studio must be downloaded and installed in order to

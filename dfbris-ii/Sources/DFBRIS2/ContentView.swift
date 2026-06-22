@@ -15,41 +15,10 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
 
-            Tab("Home",
-                systemImage: icon(.home, "house"),
-                value: .home) {
-                NavigationStack {
-                    HomeScreen()
-                }
-                .id(navigationVersion(for: .home))
-            }
-
-            Tab("Transport",
-                systemImage: icon(.transport, "lightrail"),
-                value: .transport) {
-                NavigationStack {
-                    Transport()
-                }
-                .id(navigationVersion(for: .transport))
-            }
-
-            Tab("DFB",
-                systemImage: icon(.dfb, "camera"),
-                value: .dfb) {
-                NavigationStack {
-                    DFB()
-                }
-                .id(navigationVersion(for: .dfb))
-            }
-
-            Tab("RezSys",
-                systemImage: icon(.rezsys, "wallet.bifold"),
-                value: .rezsys) {
-                NavigationStack {
-                    RezSys()
-                }
-                .id(navigationVersion(for: .rezsys))
-            }
+            homeTab
+            transportTab
+            dfbTab
+            rezsysTab
         }
         .onChange(of: selectedTab) { _, newTab in
             resetNavigation(for: newTab)
@@ -57,7 +26,9 @@ struct ContentView: View {
         .onAppear {
             if tabSwitchObserver == nil {
                 tabSwitchObserver = AppState.observeTabSwitch { tab in
-                    selectedTab = tab
+                    Task { @MainActor in
+                        selectedTab = tab
+                    }
                 }
             }
         }
@@ -68,17 +39,66 @@ struct ContentView: View {
             }
         }
         #if targetEnvironment(macCatalyst)
-            .tabViewStyle(.sidebarAdaptable)
+        .tabViewStyle(.sidebarAdaptable)
         #else
-            .tabViewStyle(.automatic)
+        .tabViewStyle(.automatic)
         #endif
         .tint(colorForTab(selectedTab))
     }
 
+    // MARK: - Tabs
+
+    private var homeTab: some View {
+        NavigationStack {
+            HomeScreen()
+        }
+        .id(navigationVersion(for: .home))
+        .tabItem {
+            Label("Home", systemImage: icon(.home, "house"))
+        }
+        .tag(TabItem.home)
+    }
+
+    private var transportTab: some View {
+        NavigationStack {
+            Transport()
+        }
+        .id(navigationVersion(for: .transport))
+        .tabItem {
+            Label("Transport", systemImage: icon(.transport, "lightrail"))
+        }
+        .tag(TabItem.transport)
+    }
+
+    private var dfbTab: some View {
+        NavigationStack {
+            DFB()
+        }
+        .id(navigationVersion(for: .dfb))
+        .tabItem {
+            Label("DFB", systemImage: icon(.dfb, "camera"))
+        }
+        .tag(TabItem.dfb)
+    }
+
+    private var rezsysTab: some View {
+        NavigationStack {
+            RezSys()
+        }
+        .id(navigationVersion(for: .rezsys))
+        .tabItem {
+            Label("RezSys", systemImage: icon(.rezsys, "wallet.bifold"))
+        }
+        .tag(TabItem.rezsys)
+    }
+
     // MARK: - ikonky (.fill pro aktivní tab)
+
     func icon(_ tab: TabItem, _ name: String) -> String {
         selectedTab == tab ? "\(name).fill" : name
     }
+
+    // MARK: - Navigation reset
 
     func navigationVersion(for tab: TabItem) -> Int {
         navigationVersions[tab, default: 0]
@@ -89,12 +109,13 @@ struct ContentView: View {
     }
 
     // MARK: - barvy tabů
+
     func colorForTab(_ tab: TabItem) -> Color {
         switch tab {
         case .transport:
             return AppColor("TransportColor", fallback: .red)
         case .dfb:
-            return AppColor("DFBColor", fallback: .yellow)
+            return AppColor("DFBColor", fallback: .green)
         case .rezsys:
             return AppColor("RezSysColor", fallback: .blue)
         default:

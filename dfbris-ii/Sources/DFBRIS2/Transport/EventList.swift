@@ -13,12 +13,14 @@ import SkipFuse
 import FoundationNetworking
 #endif
 
-#if !SKIP
+#if !TARGET_OS_ANDROID
 import WebKit
 import MapKit
 #endif
 
 #if SKIP
+#if false // Prevent Skip from emitting raw Kotlin/Java style imports which
+         // produce unresolved references in generated Kotlin.
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.content.Intent
@@ -28,6 +30,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.maps.android.compose.__
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+#endif
 #endif
 
 internal struct EventItem: Identifiable, Decodable {
@@ -80,14 +83,17 @@ private func extractLineName(from note: String) -> String? {
     return String(note[capturedRange])
 }
 
+private func normalizedLineNameKey(_ lineName: String) -> String {
+    lineName.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 private let eventSessionConfig: URLSessionConfiguration = {
     let config = URLSessionConfiguration.default
     config.timeoutIntervalForRequest = 10 // 10 second timeout
     config.timeoutIntervalForResource = 30 // 30 second total timeout
     config.httpMaximumConnectionsPerHost = 2
-    config.urlCache = URLCache(memoryCapacity: 256 * 1024, diskCapacity: 0) // 256 KB only (reduced from 10 MB)
+    config.urlCache = URLCache(memoryCapacity: 256 * 1024, diskCapacity: 0, diskPath: nil) // 256 KB only (reduced from 10 MB)
     config.requestCachePolicy = .reloadIgnoringLocalCacheData
-    config.waitsForConnectivity = true
     return config
 }()
 
@@ -124,7 +130,7 @@ internal struct EventList: View {
             ZStack {
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        AppColor("TransportColor", fallback: .blue).opacity(0.24),
+                        AppColor("TransportColor", fallback: .red).opacity(0.24),
                         Color.clear
                     ]),
                     startPoint: .top,
@@ -146,12 +152,12 @@ internal struct EventList: View {
                                     .padding(.top, 24)
                                     .frame(maxWidth: .infinity, alignment: .center)
                             } else {
-                                section(title: L("Current events"), events: currentEvents, isPast: false, 
-                                       totalEvents: allCurrentEvents.count, onLoadMore: loadMoreCurrent)
+                                section(title: L("Current events"), events: currentEvents, isPast: false,
+                                       totalEvents: allCurrentEvents.count, onLoadMore: { Task { @MainActor in loadMoreCurrent() } })
 
                                 if !pastEvents.isEmpty {
                                     section(title: L("Past events"), events: pastEvents, isPast: true,
-                                           totalEvents: allPastEvents.count, onLoadMore: loadMorePast)
+                                           totalEvents: allPastEvents.count, onLoadMore: { Task { @MainActor in loadMorePast() } })
                                 }
                             }
                         }
@@ -189,7 +195,7 @@ internal struct EventList: View {
         .padding(.vertical, 12)
     }
 
-    private func section(title: String, events: [EventItem], isPast: Bool, totalEvents: Int, onLoadMore: @escaping () -> Void) -> some View {
+    private func section(title: String, events: [EventItem], isPast: Bool, totalEvents: Int, onLoadMore: @escaping @Sendable () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.title2)
@@ -252,8 +258,9 @@ internal struct EventList: View {
             var textColors: [String: Color] = [:]
 
             for alias in decoded.lineAliases {
-                colors[alias.lineName] = color(from: alias.color)
-                textColors[alias.lineName] = color(from: alias.textColor)
+                let key = normalizedLineNameKey(alias.lineName)
+                colors[key] = Color(hex: alias.color)
+                textColors[key] = Color(hex: alias.textColor)
             }
 
             lineColors = colors
@@ -265,7 +272,7 @@ internal struct EventList: View {
     }
 
     private func loadEvents() async {
-        guard let url = URL(string: "https://www.dopravnifotoakce.cz/admin/data/events.json") else {
+        guard let url = URL(string: "https://www.dopravnifotoakce.cz/data/vyluky.json") else {
             return
         }
 
@@ -320,36 +327,11 @@ internal struct EventList: View {
     }
 
     private func startDate(for event: EventItem) -> Date {
-        parseDate(event.startDate)
+        Date.fromDottedString(event.startDate)
     }
 
     private func endDate(for event: EventItem) -> Date {
-        parseDate(event.endDate)
-    }
-
-    private func parseDate(_ value: String) -> Date {
-        let parts = value.split(separator: ".").map(String.init)
-        guard parts.count == 3,
-              let day = Int(parts[0]),
-              let month = Int(parts[1]),
-              let year = Int(parts[2]) else {
-            return .distantPast
-        }
-
-        return Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? .distantPast
-    }
-
-    private func color(from hex: String) -> Color {
-        let normalized = hex.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "#", with: "")
-        guard normalized.count == 6, let value = Int(normalized, radix: 16) else {
-            return .blue
-        }
-
-        return Color(
-            red: Double((value >> 16) & 0xFF) / 255.0,
-            green: Double((value >> 8) & 0xFF) / 255.0,
-            blue: Double(value & 0xFF) / 255.0
-        )
+        Date.fromDottedString(event.endDate)
     }
 
     private func badgeColor(for event: EventItem) -> Color {
@@ -358,11 +340,11 @@ internal struct EventList: View {
         
         // Type based colors as requested
         let type = event.eventType.lowercased()
-        if type.contains("vyluka") || type.contains("výluka") || type.contains("omezení") {
+        if type.contains("výluka") {
             return Color(red: 0.83, green: 0.0, blue: 0.0) // Deep Red
-        } else if type.contains("tras") || type.contains("odklon") {
+        } else if type.contains("posilové spoje") {
             return Color(red: 0.0, green: 0.46, blue: 0.75) // Transport Blue
-        } else if type.contains("zastáv") || type.contains("přemístění") {
+        } else if type.contains("mimořádná událost") {
             return Color(red: 0.93, green: 0.49, blue: 0.12) // Orange
         }
         
@@ -389,12 +371,7 @@ internal struct EventCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: eventIconName(for: event.eventType))
-                    .foregroundStyle(lineTextColor)
-                    .padding(6)
-                    .background(lineColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .frame(width: 28, height: 28)
+                eventIconBadge
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(LocalizedStringKey(event.eventName))
@@ -409,7 +386,7 @@ internal struct EventCard: View {
                                     .font(.system(size: 10, weight: .bold))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(lineColors[line] ?? .gray)
+                                    .background(lineColors[line] ?? fallbackLineColor(for: line))
                                     .foregroundStyle(lineTextColors[line] ?? .white)
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
@@ -429,7 +406,6 @@ internal struct EventCard: View {
                     .animation(.easeInOut(duration: 0.2), value: isExpanded)
                     .foregroundStyle(.secondary)
             }
-            .contentShape(Rectangle())
             .onTapGesture {
                 onToggle()
             }
@@ -483,10 +459,9 @@ internal struct EventCard: View {
         .background(.background.opacity(0.92))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(lineColor.opacity(isPast ? 0.2 : 0.6), lineWidth: (event.dfb == "yes" || event.pinned == "yes") ? 2 : 1)
+                .stroke(lineColor.opacity(isPast ? 0.2 : 0.6), lineWidth: (event.dfb == "yes" || event.pinned == "yes") ? 2 : 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .contentShape(Rectangle())
     }
 
     private var dateLabel: String {
@@ -517,7 +492,7 @@ internal struct EventCard: View {
     }
 
     private func dateTime(fromDate date: String, time: String) -> Date? {
-        let base = parseDate(date)
+        let base = Date.fromDottedString(date)
         guard base != .distantPast else { return nil }
 
         if time.isEmpty { return base }
@@ -536,30 +511,43 @@ internal struct EventCard: View {
         return Calendar.current.date(from: dc)
     }
 
-    private func parseDate(_ value: String) -> Date {
-        let parts = value.split(separator: ".").map(String.init)
-        guard parts.count == 3,
-              let day = Int(parts[0]),
-              let month = Int(parts[1]),
-              let year = Int(parts[2]) else {
-            return Date.distantPast
-        }
-
-        return Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? Date.distantPast
-    }
-
     private func eventIconName(for type: String) -> String {
         let key = type.lowercased()
-        if key.contains("oprava") || key.contains("repair") { return "wrench.fill" }
-        if key.contains("vyluka") || key.contains("closed") { return "xmark.octagon.fill" }
-        if key.contains("tram") || key.contains("tramvaj") { return "lightrail.fill" }
-        if key.contains("bus") || key.contains("autobus") { return "bus.fill" }
-        if key.contains("vlak") || key.contains("train") { return "train.side.front.car" }
+        if key.contains("posilové spoje") { return "plus.circle.fill" }
+        if key.contains("výluka") { return "arrow.trianglehead.turn.up.right.diamond.fill" }
+        if key.contains("zvláštní jízda") { return "camera.fill"}
+        if key.contains("novinky z dopravy") { return "newspaper.fill"}
+        if key.contains("mimořádná událost") { return "car.2.fill"}
         return "exclamationmark.triangle.fill"
+    }
+
+    private var eventIconBadge: some View {
+        ZStack {
+            Rectangle()
+                .fill(lineColor)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            Image(systemName: eventIconName(for: event.eventType))
+                .resizable()
+                .scaledToFit()
+                .padding(6)
+                .foregroundStyle(lineTextColor)
+        }
+        .frame(width: 28, height: 28)
+        .clipped()
     }
 }
 
 extension EventCard {
+    private func fallbackLineColor(for lineName: String) -> Color {
+        let seed = lineName.unicodeScalars.enumerated().reduce(0) { partialResult, element in
+            partialResult &* 31 &+ Int(element.element.value) &* (element.offset + 1)
+        }
+
+        let normalizedHue = Double((seed % 360 + 360) % 360) / 360.0
+        return Color(hue: normalizedHue, saturation: 0.62, brightness: 0.78)
+    }
+
     private func badges(from note: String) -> [String] {
         guard let regex = lineNameRegex else { return [] }
         let range = NSRange(note.startIndex..., in: note)
@@ -589,8 +577,9 @@ extension EventCard {
                     // Header logic from Flutter _buildFormattedText
                     if let lineNumber = extractLineName(from: content) {
                         // Specialized color badge if line number is detected
-                        let bgColor = lineColors[lineNumber] ?? AppColor("TransportColor", fallback: .blue)
-                        let txtColor = lineTextColors[lineNumber] ?? .white
+                            let key = normalizedLineNameKey(lineNumber)
+                            let bgColor = lineColors[key] ?? fallbackLineColor(for: key)
+                            let txtColor = lineTextColors[key] ?? .white
                         
 
                         Text(content)
@@ -626,7 +615,7 @@ extension EventCard {
                     Text(LocalizedStringKey(line))
                         .font(.callout)
                         .foregroundStyle(isPast ? .secondary : .primary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(nil)
                 } else {
                     // Empty line
                     Spacer().frame(height: 2)
@@ -687,7 +676,7 @@ internal struct PdfPreview: View {
             .padding(12)
             .background(.blue.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.blue.opacity(0.3), lineWidth: 1))
+            .border(.blue.opacity(0.3), width: 1)
         }
         .buttonStyle(.plain) // Prevents standard button highlighting from messing up the layout
         .sheet(isPresented: $showPdf) {
@@ -697,7 +686,7 @@ internal struct PdfPreview: View {
 }
 
 // Simple PDF viewer
-#if !SKIP
+#if !TARGET_OS_ANDROID
 import WebKit
 
 private struct PDFWebView: UIViewRepresentable {
@@ -721,9 +710,9 @@ internal struct PdfViewerSheet: View {
     var body: some View {
         NavigationStack {
             Group {
-                #if !SKIP
+                #if !TARGET_OS_ANDROID
                 PDFWebView(url: url)
-                #else
+                #elseif SKIP || TARGET_OS_ANDROID
                 AndroidPdfView(url: url)
                 #endif
             }
@@ -743,17 +732,18 @@ internal struct PdfViewerSheet: View {
     }
 }
 
-#if SKIP
-private struct AndroidPdfView: View {
+#if SKIP || TARGET_OS_ANDROID
+internal struct AndroidPdfView: View {
     let url: URL
 
     var body: some View {
-        ComposeView { _ in
-            let encodedUrl = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? url.absoluteString
+        ComposeView {
+            #if SKIP
+            let encodedUrl = self.url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self.url.absoluteString
             let googleDocsUrl = "https://docs.google.com/viewer?embedded=true&url=" + encodedUrl
             
-            AndroidView(factory: { context in
-                let webView = WebView(context)
+            return androidx.compose.ui.viewinterop.AndroidView(factory: { context in
+                let webView = android.webkit.WebView(context)
                 webView.settings.javaScriptEnabled = true
                 webView.settings.setSupportZoom(true)
                 webView.settings.builtInZoomControls = true
@@ -762,17 +752,20 @@ private struct AndroidPdfView: View {
                 webView.settings.loadWithOverviewMode = true
                 webView.settings.allowFileAccess = true
                 webView.settings.domStorageEnabled = true
-                webView.webViewClient = WebViewClient()
+                webView.webViewClient = android.webkit.WebViewClient()
                 
                 webView.loadUrl(googleDocsUrl)
                 return webView
             })
+            #else
+            fatalError("ComposeView only available on Android")
+            #endif
         }
     }
 }
 #endif
 
-#if !SKIP
+#if !TARGET_OS_ANDROID
 
 private struct LocationMap: View {
     let latitude: Double
@@ -797,25 +790,30 @@ private struct LocationMap: View {
     }
 }
 #else
-private struct LocationMap: View {
+struct LocationMap: View {
     let latitude: Double
     let longitude: Double
     let title: String
 
     var body: some View {
-        ComposeView { context in
+        ComposeView {
+            #if SKIP
+            let context = androidx.compose.ui.platform.LocalContext.current
             GoogleMap(cameraPositionState: rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), Float(14.0))
+                position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(com.google.android.gms.maps.model.LatLng(self.latitude, self.longitude), Float(14.0))
             }) {
                 Marker(
-                    state: MarkerState(position: LatLng(latitude, longitude)),
+                    state: MarkerState(position: com.google.android.gms.maps.model.LatLng(self.latitude, self.longitude)),
                     title: title,
                     onClick: { _ in
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=\(latitude),\(longitude)(\(title))")))
+                        context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("geo:0,0?q=\(self.latitude),\(self.longitude)(\(self.title))")))
                         return true
                     }
                 )
             }
+            #else
+            fatalError("ComposeView only available on Android")
+            #endif
         }
     }
 }
